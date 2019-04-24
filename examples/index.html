@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+    <script>
+      require(['../dist/client-logger.js'], module => {
+        const {Logger, Publisher, StatsRecorder, transports} = module.default;
+
+        const publisher = new Publisher();
+        publisher.start();
+
+        const httpTransport = new transports.HttpTransport({
+          url: 'http://127.0.0.1:3011/',
+          encode: ({logs, stats}) => {
+            return JSON.stringify({logs: logs || [], stats: stats || []});
+          }
+        });
+        publisher.addTransport(httpTransport);
+
+        const statsRecorder = new StatsRecorder({
+          publisher: publisher,
+          globalTags: [
+            'foo:bar'
+          ]
+        });
+
+        statsRecorder.increment('example-opened');
+      });
+    </script>
+  </head>
+
+  <body>
+  </body>
+</html>
