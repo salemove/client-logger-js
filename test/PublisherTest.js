@@ -14,6 +14,11 @@ describe('Publisher', () => {
   beforeEach(() => {
     transport = {process: sinon.stub().resolves()};
     defaultOpts.transports = [transport];
+    global.window = {addEventListener: sinon.stub()};
+  });
+
+  afterEach(() => {
+    delete global['window'];
   });
 
   it('does not send anything when there are no buckets', () => {
@@ -127,5 +132,55 @@ describe('Publisher', () => {
     publisher.addTransport(transport1, {position: 0});
 
     expect(publisher.transports).to.eql([transport1, transport2]);
+  });
+
+  const delay = (millis, value) =>
+    new Promise((resolve, reject) =>
+      setTimeout(resolve.bind(null, value), millis)
+    );
+
+  const createControlledTransport = () => {
+    let latestProcessController;
+    const storePromiseControl = () =>
+      new Promise(
+        (resolve, reject) => (latestProcessController = {resolve, reject})
+      );
+    const controlledPromise = {
+      then: sinon.stub().callsFake(storePromiseControl),
+      catch: sinon.stub().callsFake(storePromiseControl)
+    };
+
+    const transport = {process: sinon.stub().returns(controlledPromise)};
+    const getLatestProcessController = () => latestProcessController;
+
+    return {transport, getLatestProcessController};
+  };
+
+  it('does not start another flush while a previous one is pending', () => {
+    const publishInterval = 1;
+    const {getLatestProcessController, transport} = createControlledTransport();
+    const publisher = new Publisher(
+      R.merge(defaultOpts, {transports: [transport], publishInterval})
+    );
+
+    publisher.addToBucket('logs', 'first-log');
+
+    publisher.start();
+    return delay(publishInterval + 1)
+      .then(() => {
+        expect(transport.process.callCount).to.eql(1);
+        publisher.addToBucket('logs', 'second-log');
+        return delay(publishInterval + 1);
+      })
+      .then(() => {
+        // transport process has not resolved
+        expect(transport.process.callCount).to.eql(1);
+        getLatestProcessController().resolve();
+        return delay(publishInterval + 1);
+      })
+      .then(() => {
+        expect(transport.process.callCount).to.eql(2);
+        publisher.stop();
+      });
   });
 });
