@@ -12,46 +12,46 @@ describe('Publisher', () => {
   };
 
   beforeEach(() => {
-    transport = {process: sinon.stub()};
+    transport = {process: sinon.stub().resolves()};
     defaultOpts.transports = [transport];
   });
 
   it('does not send anything when there are no buckets', () => {
     const publisher = new Publisher(defaultOpts);
 
-    publisher.flush();
-
-    expect(transport.process.callCount).to.eql(0);
+    return publisher.flush().then(() => {
+      expect(transport.process.callCount).to.eql(0);
+    });
   });
 
   it('does not send anything when buckets are empty', () => {
     const publisher = new Publisher(defaultOpts);
 
     publisher.addToBucket('bucket', 'item');
-    publisher.flush();
-    transport.process.reset();
-
-    publisher.flush();
-    expect(transport.process.callCount).to.eql(0);
+    return publisher
+      .flush()
+      .then(() => transport.process.reset())
+      .then(() => publisher.flush())
+      .then(() => expect(transport.process.callCount).to.eql(0));
   });
 
   it('re-enqueues failed items', () => {
-    transport.process = ({onFailure}) => onFailure();
+    transport.process.returns(Promise.reject());
     const publisher = new Publisher(defaultOpts);
 
     publisher.addToBucket('logs', 'first-log');
-    publisher.flush();
-
-    expect(publisher.buckets['logs']).to.eql(['first-log']);
+    return publisher
+      .flush()
+      .catch(() => expect(publisher.buckets['logs']).to.eql(['first-log']));
   });
 
   it('does not re-enqueue successfully sent items', () => {
     const publisher = new Publisher(defaultOpts);
 
     publisher.addToBucket('logs', 'first-log');
-    publisher.flush();
-
-    expect(publisher.buckets['logs']).to.eql([]);
+    return publisher
+      .flush()
+      .then(() => expect(publisher.buckets['logs']).to.eql([]));
   });
 
   it('sends maximally maximumBatchSize of items from each bucket', () => {
@@ -64,11 +64,11 @@ describe('Publisher', () => {
       publisher.addToBucket('bucket2', 'item');
     }, maximumBatchSize + 1);
 
-    publisher.flush();
-
-    expect(transport.process.callCount).to.eql(1);
-    expect(publisher.buckets['bucket1'].length).to.eql(1);
-    expect(publisher.buckets['bucket2'].length).to.eql(1);
+    return publisher.flush().then(() => {
+      expect(transport.process.callCount).to.eql(1);
+      expect(publisher.buckets['bucket1'].length).to.eql(1);
+      expect(publisher.buckets['bucket2'].length).to.eql(1);
+    });
   });
 
   it('discards items over maximumBufferSize per bucket', () => {
@@ -84,30 +84,29 @@ describe('Publisher', () => {
   });
 
   it('does not send payload over a secondary transport when primary succeeds', () => {
-    const primary = {process: sinon.stub()};
-    const secondary = {process: sinon.stub()};
+    const primary = {process: sinon.stub().resolves()};
+    const secondary = {process: sinon.stub().rejects()};
     const transports = [primary, secondary];
     const publisher = new Publisher(R.merge(defaultOpts, {transports}));
 
     publisher.addToBucket('logs', 'first-log');
-    publisher.flush();
-
-    expect(primary.process.callCount).to.eql(1);
-    expect(secondary.process.callCount).to.eql(0);
+    return publisher.flush().then(() => {
+      expect(primary.process.callCount).to.eql(1);
+      expect(secondary.process.callCount).to.eql(0);
+    });
   });
 
   it('sends payload over a secondary transport when primary fails', () => {
-    const primary = {process: sinon.stub()};
-    primary.process.callsFake(({onFailure}) => onFailure());
-    const secondary = {process: sinon.stub()};
+    const primary = {process: sinon.stub().rejects()};
+    const secondary = {process: sinon.stub().resolves()};
     const transports = [primary, secondary];
     const publisher = new Publisher(R.merge(defaultOpts, {transports}));
 
     publisher.addToBucket('logs', 'first-log');
-    publisher.flush();
-
-    expect(primary.process.callCount).to.eql(1);
-    expect(secondary.process.callCount).to.eql(1);
+    return publisher.flush().then(() => {
+      expect(primary.process.callCount).to.eql(1);
+      expect(secondary.process.callCount).to.eql(1);
+    });
   });
 
   it('adds a new transport', () => {

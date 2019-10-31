@@ -77,9 +77,9 @@ Transports are tried in order. If publish fails with one transport then the next
 
 ```js
 publisher.addTransport(
-  new transports.CustomTransport(({payload, onFailure}) => {
+  new transports.CustomTransport(({payload}) => {
     // Send payload which includes {logs, stats} over some custom mechanism
-    // Call onFailure() on error
+    // Return promise which resolves when the request has succeeded and rejects otherwise
   })
 );
 

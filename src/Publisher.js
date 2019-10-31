@@ -16,18 +16,15 @@ export default function Publisher({
 
   const buckets = {};
 
-  const send = ({transports, payload, onFailure}) => {
-    if (transports.length === 0) return onFailure();
+  const send = ({transports, payload}) => {
+    if (transports.length === 0) return Promise.reject();
 
-    transports[0].process({
-      payload,
-      onFailure: () =>
-        send({
-          payload,
-          transports: transports.slice(1),
-          onFailure
-        })
-    });
+    return transports[0].process({payload}).catch(() =>
+      send({
+        payload,
+        transports: transports.slice(1)
+      })
+    );
   };
 
   const isEmptyPayload = payload =>
@@ -40,14 +37,15 @@ export default function Publisher({
       payload[key] = buckets[key].splice(0, maximumBatchSize);
     });
 
-    const onFailure = () => {
-      Object.keys(payload).forEach(key => {
-        buckets[key] = payload[key].concat(buckets[key]);
-      });
-    };
-
     if (!isEmptyPayload(payload)) {
-      send({transports, payload, onFailure});
+      return send({transports, payload}).catch(() => {
+        Object.keys(payload).forEach(key => {
+          buckets[key] = payload[key].concat(buckets[key]);
+        });
+        return Promise.reject();
+      });
+    } else {
+      return Promise.resolve();
     }
   };
 
