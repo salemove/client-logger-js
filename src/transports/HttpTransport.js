@@ -5,19 +5,23 @@ export default function HttpTransport({url, method, headers, encode}) {
   if (!encode) encode = payload => JSON.stringify(payload);
 
   // XMLHttpRequest is only used when Fetch API is not supported
-  const sendUsingXMLHttpRequest = ({payload, onFailure}) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open(method, url);
-    Object.keys(headers).forEach(key => {
-      xhr.setRequestHeader(key, headers[key]);
+  const sendUsingXMLHttpRequest = ({payload}) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open(method, url);
+      Object.keys(headers).forEach(key => {
+        xhr.setRequestHeader(key, headers[key]);
+      });
+      xhr.onload = () => {
+        if (xhr.status < 200 || status >= 300) {
+          reject();
+        } else {
+          resolve();
+        }
+      };
+      xhr.onerror = () => reject();
+      xhr.send(encode(payload));
     });
-    xhr.onload = () => {
-      if (xhr.status < 200 || status >= 300) {
-        onFailure();
-      }
-    };
-    xhr.onerror = () => onFailure();
-    xhr.send(encode(payload));
   };
 
   /**
@@ -25,15 +29,13 @@ export default function HttpTransport({url, method, headers, encode}) {
    * can be used to allow the request to outlive the page. Fetch with the
    * keepalive flag is a replacement for the sendBeacon API.
    */
-  const sendUsingFetchAPI = ({payload, onFailure}) => {
-    window
-      .fetch(url, {
-        method,
-        headers,
-        keepalive: true,
-        body: encode(payload)
-      })
-      .catch(() => onFailure());
+  const sendUsingFetchAPI = ({payload}) => {
+    return window.fetch(url, {
+      method,
+      headers,
+      keepalive: true,
+      body: encode(payload)
+    });
   };
 
   this.process = window.fetch ? sendUsingFetchAPI : sendUsingXMLHttpRequest;

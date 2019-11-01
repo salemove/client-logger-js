@@ -16,18 +16,15 @@ export default function Publisher({
 
   const buckets = {};
 
-  const send = ({transports, payload, onFailure}) => {
-    if (transports.length === 0) return onFailure();
+  const send = ({transports, payload}) => {
+    if (transports.length === 0) return Promise.reject();
 
-    transports[0].process({
-      payload,
-      onFailure: () =>
-        send({
-          payload,
-          transports: transports.slice(1),
-          onFailure
-        })
-    });
+    return transports[0].process({payload}).catch(() =>
+      send({
+        payload,
+        transports: transports.slice(1)
+      })
+    );
   };
 
   const isEmptyPayload = payload =>
@@ -40,23 +37,40 @@ export default function Publisher({
       payload[key] = buckets[key].splice(0, maximumBatchSize);
     });
 
-    const onFailure = () => {
-      Object.keys(payload).forEach(key => {
-        buckets[key] = payload[key].concat(buckets[key]);
-      });
-    };
-
     if (!isEmptyPayload(payload)) {
-      send({transports, payload, onFailure});
+      return send({transports, payload}).catch(() => {
+        Object.keys(payload).forEach(key => {
+          buckets[key] = payload[key].concat(buckets[key]);
+        });
+        return Promise.reject();
+      });
+    } else {
+      return Promise.resolve();
     }
   };
 
   let started = false;
+  let timer = null;
+  let flushInProgress = false;
+
   const start = () => {
     if (started) throw new Error('Publisher is already started');
     started = true;
-    setInterval(flush, publishInterval);
+    timer = setInterval(() => {
+      if (!flushInProgress) {
+        flushInProgress = true;
+        flush().then(
+          () => (flushInProgress = false),
+          () => (flushInProgress = false)
+        );
+      }
+    }, publishInterval);
     window.addEventListener('unload', flush);
+  };
+
+  const stop = () => {
+    started = false;
+    clearInterval(timer);
   };
 
   const addToBucket = (bucketKey, item) => {
@@ -68,5 +82,5 @@ export default function Publisher({
     buckets[bucketKey].splice(maximumBufferSize);
   };
 
-  return {start, addToBucket, flush, buckets, addTransport, transports};
+  return {start, stop, addToBucket, flush, buckets, addTransport, transports};
 }
