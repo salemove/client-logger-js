@@ -19,6 +19,8 @@ describe('Logger', () => {
       {publisher, currentIsoDate, windowConsole, localStorage},
       loggerOpts()
     );
+    // Don't rely on browser's implementaion of Array.prototype.reduce
+    Array.prototype.reduce = () => undefined;
     logger = new Logger(opts);
   });
 
