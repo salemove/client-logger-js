@@ -6,15 +6,16 @@ const merge = (obj1, obj2) => {
 };
 
 const evaluateTags = tags => {
-  return Object.keys(tags).reduce((acc, key) => {
+  const result = {};
+  for (const key in tags) {
     const value = tags[key];
     if (typeof value == 'function') {
-      acc[key] = value();
+      result[key] = value();
     } else {
-      acc[key] = value;
+      result[key] = value;
     }
-    return acc;
-  }, {});
+  }
+  return result;
 };
 
 const forEachEnumerableOwnProperty = (obj, callback) => {
