@@ -143,6 +143,30 @@ describe('Logger', () => {
         ]
       });
     });
+
+    it('adds previous log as breadcrumb to errors', () => {
+      const genericMessage = 'a message';
+      logger.info(genericMessage);
+
+      const message = 'some kind of error';
+      logger.error(message);
+      expectLog({
+        level: 'error',
+        attributes: [
+          {
+            message: message,
+            stack: sinon.match('Error: some kind of error')
+          }
+        ],
+        breadcrumbs: [
+          {
+            level: 'info',
+            attributes: [genericMessage],
+            timestamp: currentIsoDate()
+          }
+        ]
+      });
+    });
   });
 
   describe('#withTags', () => {

@@ -1,3 +1,5 @@
+import Breadcrumbs from './Breadcrumbs';
+
 const merge = (obj1, obj2) => {
   const obj3 = {};
   for (const attrname in obj1) obj3[attrname] = obj1[attrname];
@@ -37,6 +39,7 @@ export default function Logger({
   liveLogsKey = 'sm.live_logs',
   liveLogsEnabled = false
 }) {
+  const breadcrumbs = new Breadcrumbs();
   const add = item => publisher.addToBucket('logs', item);
 
   const isLiveLoggingEnabled = () =>
@@ -95,6 +98,11 @@ export default function Logger({
       let params = evaluateTags(tags);
       params = merge(params, {level, attributes, timestamp: currentIsoDate()});
 
+      if (level === 'error') {
+        params = merge(params, {breadcrumbs: breadcrumbs.list});
+      } else {
+        breadcrumbs.add(params);
+      }
       add(params);
     };
   };
