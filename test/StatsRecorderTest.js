@@ -97,6 +97,15 @@ describe('StatsRecorder', () => {
 
       expectStat({stat: name, params: [metricName, defaultValue, []]});
     });
+
+    it(`records '${name}' metric with value of one and tags if value is not present`, () => {
+      const statsRecorder = new StatsRecorder(defaultOpts);
+      const metricName = 'metric-name';
+      const metricTags = ['foo:bar'];
+      statsRecorder[name](metricName, metricTags);
+
+      expectStat({stat: name, params: [metricName, 1, metricTags]});
+    });
   }
 
   function expectStat(expectedStat) {
