@@ -8,11 +8,21 @@ export default function StatsRecorder({publisher, globalTags = []}) {
   };
 
   this.increment = (metric, value, tags) => {
-    add(buildStat('increment', metric, value || 1, tags));
+    if (!Number.isInteger(value)) {
+      tags = value;
+      value = 1;
+    }
+
+    add(buildStat('increment', metric, value, tags));
   };
 
   this.decrement = (metric, value, tags) => {
-    add(buildStat('decrement', metric, value || 1, tags));
+    if (!Number.isInteger(value)) {
+      tags = value;
+      value = 1;
+    }
+
+    add(buildStat('decrement', metric, value, tags));
   };
 
   this.gauge = (metric, value, tags) => {
