@@ -8,7 +8,7 @@ export default function StatsRecorder({publisher, globalTags = []}) {
   };
 
   this.increment = (metric, value, tags) => {
-    if (!parseInt(value)) {
+    if (isNaN(parseInt(value))) {
       tags = value;
       value = 1;
     }
@@ -17,7 +17,7 @@ export default function StatsRecorder({publisher, globalTags = []}) {
   };
 
   this.decrement = (metric, value, tags) => {
-    if (!parseInt(value)) {
+    if (isNaN(parseInt(value))) {
       tags = value;
       value = 1;
     }
