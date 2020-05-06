@@ -4,6 +4,7 @@ export default function Publisher({
   publishInterval = 3000, // in milliseconds
   maximumBatchSize = 50,
   maximumBufferSize = 1000,
+  maximumConsecutiveRetries = 10,
   transports = []
 } = {}) {
   const addTransport = (transport, {position} = {}) => {
@@ -15,6 +16,7 @@ export default function Publisher({
   };
 
   const buckets = {};
+  const retries = {};
 
   const send = ({transports, payload}) => {
     if (transports.length === 0) return Promise.reject();
@@ -36,14 +38,25 @@ export default function Publisher({
     Object.keys(buckets).forEach(key => {
       payload[key] = buckets[key].splice(0, maximumBatchSize);
     });
-
     if (!isEmptyPayload(payload)) {
-      return send({transports, payload}).catch(() => {
-        Object.keys(payload).forEach(key => {
-          buckets[key] = payload[key].concat(buckets[key]);
+      return send({transports, payload})
+        .then(() => {
+          // On succesful send, reset all retry counts
+          Object.keys(retries).forEach(bucketKey => (retries[bucketKey] = 0));
+          return Promise.resolve();
+        })
+        .catch(() => {
+          Object.keys(payload).forEach(key => {
+            retries[key]++;
+            if (retries[key] < maximumConsecutiveRetries) {
+              buckets[key] = payload[key].concat(buckets[key]);
+            } else {
+              // Reset retries when maximumConsecutiveRetries is reached
+              retries[key] = 0;
+            }
+          });
+          return Promise.reject();
         });
-        return Promise.reject();
-      });
     } else {
       return Promise.resolve();
     }
@@ -75,9 +88,11 @@ export default function Publisher({
 
   const addToBucket = (bucketKey, item) => {
     if (!buckets[bucketKey]) {
+      if (!retries[bucketKey]) {
+        retries[bucketKey] = 0;
+      }
       buckets[bucketKey] = [];
     }
-
     buckets[bucketKey].push(item);
     buckets[bucketKey].splice(maximumBufferSize);
   };
