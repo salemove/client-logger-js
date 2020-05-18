@@ -8,7 +8,8 @@ describe('Publisher', () => {
   const defaultOpts = {
     publishInterval: 3000,
     maximumBatchSize: 10,
-    maximumBufferSize: 40
+    maximumBufferSize: 40,
+    maximumConsecutiveRetries: 10
   };
 
   beforeEach(() => {
@@ -48,6 +49,88 @@ describe('Publisher', () => {
     return publisher
       .flush()
       .catch(() => expect(publisher.buckets['logs']).to.eql(['first-log']));
+  });
+
+  it('does not re-enqueue payload if maximumConsecutiveRetries is reached', () => {
+    transport.process.returns(Promise.reject());
+    const maximumConsecutiveRetries = 2;
+    const maximumBatchSize = 10;
+    const opts = R.merge(defaultOpts, {
+      maximumConsecutiveRetries,
+      maximumBatchSize
+    });
+    const publisher = new Publisher(opts);
+
+    R.times(() => {
+      publisher.addToBucket('logs', 'item');
+    }, 25);
+    return publisher
+      .flush()
+      .catch(() => publisher.flush())
+      .catch(() => expect(publisher.buckets['logs'].length).to.eql(15));
+  });
+
+  it('re-enqueues payload after maximumConsecutiveRetries is reset', () => {
+    transport.process.returns(Promise.reject());
+    const maximumConsecutiveRetries = 2;
+    const maximumBatchSize = 10;
+    const opts = R.merge(defaultOpts, {
+      maximumConsecutiveRetries,
+      maximumBatchSize
+    });
+    const publisher = new Publisher(opts);
+
+    R.times(() => {
+      publisher.addToBucket('logs', 'item');
+    }, 40);
+    // Try send 10 logs
+    return (
+      publisher
+        .flush()
+        // fails, try again
+        .catch(() => publisher.flush())
+        // fails, try again, payload discarded
+        .catch(() => publisher.flush())
+        // fails, does not discard
+        .catch(() => expect(publisher.buckets['logs'].length).to.eql(30))
+    );
+  });
+
+  it('re-enqueues logs after a succesful request', () => {
+    transport.process.returns(Promise.reject());
+    const maximumConsecutiveRetries = 2;
+    const maximumBatchSize = 10;
+    const opts = R.merge(defaultOpts, {
+      maximumConsecutiveRetries,
+      maximumBatchSize
+    });
+    const publisher = new Publisher(opts);
+
+    R.times(() => {
+      publisher.addToBucket('logs', 'item');
+    }, 40);
+
+    return (
+      publisher
+        .flush()
+        // flush fails
+        .catch(() => {
+          // Payload is put back in buckets
+          transport.process.returns(Promise.resolve());
+          return publisher.flush().then(() => {
+            // Flush succeeds, next 10 logs are tried
+            transport.process.returns(Promise.reject());
+            return (
+              publisher
+                .flush()
+                // Flush fails, payload is put back in buckets
+                .catch(() =>
+                  expect(publisher.buckets['logs'].length).to.eql(30)
+                )
+            );
+          });
+        })
+    );
   });
 
   it('does not re-enqueue successfully sent items', () => {
