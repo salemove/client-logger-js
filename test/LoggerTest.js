@@ -167,6 +167,16 @@ describe('Logger', () => {
         ]
       });
     });
+
+    it('does not add log if error has smAcknowledged flag', () => {
+      const error = new Error('error');
+      error.smAcknowledged = true;
+
+      logger.error(error);
+      logger.error('message', error);
+
+      expect(publisher.addToBucket).to.not.have.been.called;
+    });
   });
 
   describe('#withTags', () => {
