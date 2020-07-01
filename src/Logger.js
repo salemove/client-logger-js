@@ -107,8 +107,7 @@ export default function Logger({
     };
   };
 
-  const includesError = args =>
-    args.filter(arg => arg instanceof Error).length > 0;
+  const findTopLevelError = args => args.filter(arg => arg instanceof Error)[0];
 
   this.debug = log('debug');
   this.log = log('info');
@@ -116,8 +115,13 @@ export default function Logger({
   this.warn = log('warn');
   this.error = function() {
     const args = Array.prototype.slice.call(arguments);
+    const maybeError = findTopLevelError(args);
 
-    if (typeof args[0] === 'string' && !includesError(args))
+    if (maybeError && maybeError.smAcknowledged) {
+      return;
+    }
+
+    if (typeof args[0] === 'string' && !maybeError)
       args[0] = new Error(args[0]);
 
     return log('error').apply(null, args);
