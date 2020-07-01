@@ -117,7 +117,7 @@ export default function Logger({
     const args = Array.prototype.slice.call(arguments);
     const maybeError = findTopLevelError(args);
 
-    if (maybeError && maybeError.smAcknowledged) {
+    if (maybeError && maybeError._acked) {
       return;
     }
 
