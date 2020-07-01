@@ -168,9 +168,9 @@ describe('Logger', () => {
       });
     });
 
-    it('does not add log if error has smAcknowledged flag', () => {
+    it('does not add log if error has _acked flag', () => {
       const error = new Error('error');
-      error.smAcknowledged = true;
+      error._acked = true;
 
       logger.error(error);
       logger.error('message', error);
