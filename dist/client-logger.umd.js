@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global['client-logger'] = factory());
-}(this, (function () { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+  typeof define === 'function' && define.amd ? define(['exports'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global['client-logger'] = {}));
+}(this, (function (exports) { 'use strict';
 
   function CustomTransport(processFn) {
     if (!processFn) throw new Error('processFn must be specificed when using CustomTransport');
@@ -459,16 +459,16 @@
     };
   }
 
-  var ClientLogger = {
-    Logger: Logger,
-    Publisher: Publisher,
-    StatsRecorder: StatsRecorder,
-    transports: {
-      CustomTransport: CustomTransport,
-      HttpTransport: HttpTransport
-    }
+  var transports = {
+    CustomTransport: CustomTransport,
+    HttpTransport: HttpTransport
   };
 
-  return ClientLogger;
+  exports.Logger = Logger;
+  exports.Publisher = Publisher;
+  exports.StatsRecorder = StatsRecorder;
+  exports.transports = transports;
+
+  Object.defineProperty(exports, '__esModule', { value: true });
 
 })));

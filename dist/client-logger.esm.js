@@ -453,14 +453,9 @@ function StatsRecorder(_ref) {
   };
 }
 
-var ClientLogger = {
-  Logger: Logger,
-  Publisher: Publisher,
-  StatsRecorder: StatsRecorder,
-  transports: {
-    CustomTransport: CustomTransport,
-    HttpTransport: HttpTransport
-  }
+var transports = {
+  CustomTransport: CustomTransport,
+  HttpTransport: HttpTransport
 };
 
-export default ClientLogger;
+export { Logger, Publisher, StatsRecorder, transports };
