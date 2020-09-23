@@ -1,6 +1,6 @@
 {
   "name": "client-logger",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "",
   "module": "dist/client-logger.esm.js",
   "browser": "dist/client-logger.umd.js",
