@@ -121,14 +121,12 @@ export default function Logger({
       return;
     }
 
-    if (typeof args[0] === 'string' && !maybeError)
-      args[0] = new Error(args[0]);
+    if (typeof args[0] === 'string' && !maybeError) args[0] = new Error(args[0]);
 
     return log('error').apply(null, args);
   };
 
-  this.withTags = newTags =>
-    new Logger(merge(arguments[0], {tags: merge(tags, newTags)}));
+  this.withTags = newTags => new Logger(merge(arguments[0], {tags: merge(tags, newTags)}));
 
   this.enableLiveLogs = () => (localStorage[liveLogsKey] = '1');
 }

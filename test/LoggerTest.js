@@ -15,10 +15,7 @@ describe('Logger', () => {
     windowConsole = {info: sinon.stub()};
     localStorage = {};
     publisher = {addToBucket: sinon.stub()};
-    const opts = R.merge(
-      {publisher, currentIsoDate, windowConsole, localStorage},
-      loggerOpts()
-    );
+    const opts = R.merge({publisher, currentIsoDate, windowConsole, localStorage}, loggerOpts());
     // Don't rely on browser's implementaion of Array.prototype.reduce
     Array.prototype.reduce = () => undefined;
     logger = new Logger(opts);
@@ -67,10 +64,7 @@ describe('Logger', () => {
         logger[level](message, obj);
         expectLog({
           level,
-          attributes: [
-            message,
-            {arr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, '-pruned-']}
-          ]
+          attributes: [message, {arr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, '-pruned-']}]
         });
       });
 

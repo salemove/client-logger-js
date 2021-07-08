@@ -46,9 +46,7 @@ describe('Publisher', () => {
     const publisher = new Publisher(defaultOpts);
 
     publisher.addToBucket('logs', 'first-log');
-    return publisher
-      .flush()
-      .catch(() => expect(publisher.buckets['logs']).to.eql(['first-log']));
+    return publisher.flush().catch(() => expect(publisher.buckets['logs']).to.eql(['first-log']));
   });
 
   it('does not re-enqueue payload if maximumConsecutiveRetries is reached', () => {
@@ -124,9 +122,7 @@ describe('Publisher', () => {
               publisher
                 .flush()
                 // Flush fails, payload is put back in buckets
-                .catch(() =>
-                  expect(publisher.buckets['logs'].length).to.eql(30)
-                )
+                .catch(() => expect(publisher.buckets['logs'].length).to.eql(30))
             );
           });
         })
@@ -137,9 +133,7 @@ describe('Publisher', () => {
     const publisher = new Publisher(defaultOpts);
 
     publisher.addToBucket('logs', 'first-log');
-    return publisher
-      .flush()
-      .then(() => expect(publisher.buckets['logs']).to.eql([]));
+    return publisher.flush().then(() => expect(publisher.buckets['logs']).to.eql([]));
   });
 
   it('sends maximally maximumBatchSize of items from each bucket', () => {
@@ -166,9 +160,7 @@ describe('Publisher', () => {
     const items = R.times(n => `item-${n}`, maximumBufferSize + 1);
     items.forEach(item => publisher.addToBucket('bucket', item));
 
-    expect(publisher.buckets['bucket']).to.eql(
-      R.take(maximumBufferSize, items)
-    );
+    expect(publisher.buckets['bucket']).to.eql(R.take(maximumBufferSize, items));
   });
 
   it('does not send payload over a secondary transport when primary succeeds', () => {
@@ -218,16 +210,12 @@ describe('Publisher', () => {
   });
 
   const delay = (millis, value) =>
-    new Promise((resolve, reject) =>
-      setTimeout(resolve.bind(null, value), millis)
-    );
+    new Promise((resolve, reject) => setTimeout(resolve.bind(null, value), millis));
 
   const createControlledTransport = () => {
     let latestProcessController;
     const storePromiseControl = () =>
-      new Promise(
-        (resolve, reject) => (latestProcessController = {resolve, reject})
-      );
+      new Promise((resolve, reject) => (latestProcessController = {resolve, reject}));
     const controlledPromise = {
       then: sinon.stub().callsFake(storePromiseControl),
       catch: sinon.stub().callsFake(storePromiseControl)

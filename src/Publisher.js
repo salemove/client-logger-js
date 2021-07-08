@@ -30,8 +30,7 @@ export default function Publisher({
   };
 
   const isEmptyPayload = payload =>
-    Object.keys(payload).length === 0 ||
-    objectValues(payload).every(items => items.length === 0);
+    Object.keys(payload).length === 0 || objectValues(payload).every(items => items.length === 0);
 
   const flush = () => {
     const payload = {};
