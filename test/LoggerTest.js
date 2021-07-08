@@ -15,10 +15,7 @@ describe('Logger', () => {
     windowConsole = {info: sinon.stub()};
     localStorage = {};
     publisher = {addToBucket: sinon.stub()};
-    const opts = R.merge(
-      {publisher, currentIsoDate, windowConsole, localStorage},
-      loggerOpts()
-    );
+    const opts = R.merge({publisher, currentIsoDate, windowConsole, localStorage}, loggerOpts());
     // Don't rely on browser's implementaion of Array.prototype.reduce
     Array.prototype.reduce = () => undefined;
     logger = new Logger(opts);
@@ -42,7 +39,7 @@ describe('Logger', () => {
       });
 
       it('stringifies function arguments', () => {
-        const fn = function() {
+        const fn = function () {
           whatever();
         };
 
@@ -53,7 +50,9 @@ describe('Logger', () => {
       it('prunes deeply nested objects', () => {
         const message = 'a message';
 
-        logger[level](message, {a: [{deeply: {nested: 'b'}, shallow: 'c'}]});
+        logger[level](message, {
+          a: [{deeply: {nested: 'b'}, shallow: 'c'}]
+        });
         expectLog({
           level,
           attributes: [message, {a: [{deeply: '-pruned-', shallow: 'c'}]}]
@@ -67,10 +66,7 @@ describe('Logger', () => {
         logger[level](message, obj);
         expectLog({
           level,
-          attributes: [
-            message,
-            {arr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, '-pruned-']}
-          ]
+          attributes: [message, {arr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, '-pruned-']}]
         });
       });
 
@@ -187,7 +183,12 @@ describe('Logger', () => {
       const newLogger = logger.withTags({bar: 'baz'});
 
       newLogger.info(message);
-      expectLog({level: 'info', attributes: [message], foo: 'bar', bar: 'baz'});
+      expectLog({
+        level: 'info',
+        attributes: [message],
+        foo: 'bar',
+        bar: 'baz'
+      });
     });
   });
 

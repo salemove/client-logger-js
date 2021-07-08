@@ -84,7 +84,7 @@ export default function Logger({
   };
 
   const log = level => {
-    return function() {
+    return function () {
       if (isLiveLoggingEnabled()) {
         const writer = windowConsole[level] || windowConsole['log'];
         writer.apply(writer, arguments);
@@ -96,7 +96,11 @@ export default function Logger({
         .filter(attribute => attribute !== undefined);
 
       let params = evaluateTags(tags);
-      params = merge(params, {level, attributes, timestamp: currentIsoDate()});
+      params = merge(params, {
+        level,
+        attributes,
+        timestamp: currentIsoDate()
+      });
 
       if (level === 'error') {
         params = merge(params, {breadcrumbs: breadcrumbs.list});
@@ -113,7 +117,7 @@ export default function Logger({
   this.log = log('info');
   this.info = log('info');
   this.warn = log('warn');
-  this.error = function() {
+  this.error = function () {
     const args = Array.prototype.slice.call(arguments);
     const maybeError = findTopLevelError(args);
 
@@ -121,14 +125,12 @@ export default function Logger({
       return;
     }
 
-    if (typeof args[0] === 'string' && !maybeError)
-      args[0] = new Error(args[0]);
+    if (typeof args[0] === 'string' && !maybeError) args[0] = new Error(args[0]);
 
     return log('error').apply(null, args);
   };
 
-  this.withTags = newTags =>
-    new Logger(merge(arguments[0], {tags: merge(tags, newTags)}));
+  this.withTags = newTags => new Logger(merge(arguments[0], {tags: merge(tags, newTags)}));
 
   this.enableLiveLogs = () => (localStorage[liveLogsKey] = '1');
 }
