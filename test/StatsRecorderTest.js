@@ -109,9 +109,6 @@ describe('StatsRecorder', () => {
   }
 
   function expectStat(expectedStat) {
-    expect(publisher.addToBucket).to.have.been.calledWith(
-      'stats',
-      expectedStat
-    );
+    expect(publisher.addToBucket).to.have.been.calledWith('stats', expectedStat);
   }
 });

@@ -42,6 +42,9 @@ export default function StatsRecorder({publisher, globalTags = []}) {
   };
 
   this.withTags = tags => {
-    return new StatsRecorder({publisher, globalTags: globalTags.concat(tags)});
+    return new StatsRecorder({
+      publisher,
+      globalTags: globalTags.concat(tags)
+    });
   };
 }
