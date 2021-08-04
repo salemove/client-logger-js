@@ -65,7 +65,8 @@ describe('Logger', () => {
         const zeroTo50 = Array.from(Array(50).keys());
         const obj = {
           simple_array: zeroTo50,
-          array_with_objects: zeroTo50.map(key => ({key}))
+          array_with_objects: zeroTo50.map(key => ({key})),
+          array_with_arrays: zeroTo50.map(key => [key])
         };
 
         logger[level](message, obj);
@@ -75,7 +76,8 @@ describe('Logger', () => {
             message,
             {
               simple_array: [0, 1, 2, '-pruned-'],
-              array_with_objects: [{key: 0}, {key: 1}, {key: 2}, {pruned: true}]
+              array_with_objects: [{key: 0}, {key: 1}, {key: 2}, {pruned: true}],
+              array_with_arrays: [[0], [1], [2], ['-pruned-']]
             }
           ]
         });

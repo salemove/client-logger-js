@@ -51,9 +51,12 @@ export default function Logger({
     for (let i = 0; i < arr.length; i++) {
       if (i === maxArrayLength) {
         const prevValue = arr[i - 1];
-        if (prevValue && typeof prevValue === 'object' && !Array.isArray(prevValue)) {
-          // Our log consumer does not accept strings mixed with objects in arrays,
-          // i.e. cannot simply use '-pruned-' here.
+
+        // Our log consumer does not mixed objects in arrays,
+        // i.e. cannot simply use '-pruned-' here.
+        if (Array.isArray(prevValue)) {
+          formattedArray.push(['-pruned-']);
+        } else if (prevValue && typeof prevValue === 'object') {
           formattedArray.push({pruned: true});
         } else {
           formattedArray.push('-pruned-');
