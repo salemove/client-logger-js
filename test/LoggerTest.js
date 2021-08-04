@@ -9,7 +9,8 @@ describe('Logger', () => {
   let windowConsole;
   let localStorage;
   const currentIsoDate = () => 'current-iso-date';
-  const loggerOpts = memo().is(() => ({}));
+  const maxArrayLength = 3;
+  const loggerOpts = memo().is(() => ({maxArrayLength}));
 
   beforeEach(() => {
     windowConsole = {info: sinon.stub()};
@@ -61,12 +62,24 @@ describe('Logger', () => {
 
       it('prunes long arrays in an object', () => {
         const message = 'a message';
-        const obj = {arr: Array.from(Array(50).keys())};
+        const zeroTo50 = Array.from(Array(50).keys());
+        const obj = {
+          simple_array: zeroTo50,
+          array_with_objects: zeroTo50.map(key => ({key})),
+          array_with_arrays: zeroTo50.map(key => [key])
+        };
 
         logger[level](message, obj);
         expectLog({
           level,
-          attributes: [message, {arr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, '-pruned-']}]
+          attributes: [
+            message,
+            {
+              simple_array: [0, 1, 2, '-pruned-'],
+              array_with_objects: [{key: 0}, {key: 1}, {key: 2}, {pruned: true}],
+              array_with_arrays: [[0], [1], [2], ['-pruned-']]
+            }
+          ]
         });
       });
 
