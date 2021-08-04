@@ -50,7 +50,14 @@ export default function Logger({
 
     for (let i = 0; i < arr.length; i++) {
       if (i === maxArrayLength) {
-        formattedArray.push('-pruned-');
+        const prevValue = arr[i - 1];
+        if (prevValue && typeof prevValue === 'object' && !Array.isArray(prevValue)) {
+          // Our log consumer does not accept strings mixed with objects in arrays,
+          // i.e. cannot simply use '-pruned-' here.
+          formattedArray.push({pruned: true});
+        } else {
+          formattedArray.push('-pruned-');
+        }
         break;
       }
 
