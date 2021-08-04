@@ -168,7 +168,19 @@
 
       for (var i = 0; i < arr.length; i++) {
         if (i === maxArrayLength) {
-          formattedArray.push('-pruned-');
+          var prevValue = arr[i - 1]; // Our log consumer does not mixed objects in arrays,
+          // i.e. cannot simply use '-pruned-' here.
+
+          if (Array.isArray(prevValue)) {
+            formattedArray.push(['-pruned-']);
+          } else if (prevValue && _typeof(prevValue) === 'object') {
+            formattedArray.push({
+              pruned: true
+            });
+          } else {
+            formattedArray.push('-pruned-');
+          }
+
           break;
         }
 
