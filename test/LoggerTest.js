@@ -83,6 +83,21 @@ describe('Logger', () => {
         });
       });
 
+      it('prunes nested arrays that exceed depth limit', () => {
+        const message = 'a message';
+
+        let recursive_object = {};
+        recursive_object.f = recursive_object;
+
+        logger[level](message, {
+          a: {b: {c: [[{d: recursive_object}], {f: 'string'}]}}
+        });
+        expectLog({
+          level,
+          attributes: [message, {a: {b: {c: ['-pruned-']}}}]
+        });
+      });
+
       it('extracts error information from error object', () => {
         const error = new Error('oh snap');
 

@@ -46,6 +46,8 @@ export default function Logger({
     windowConsole && (liveLogsEnabled || localStorage[liveLogsKey] === '1');
 
   const formatArray = (arr, depthLevel) => {
+    if (maxObjectDepth === depthLevel) return ['-pruned-'];
+
     const formattedArray = [];
 
     for (let i = 0; i < arr.length; i++) {
