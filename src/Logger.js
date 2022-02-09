@@ -90,6 +90,7 @@ export default function Logger({
   const format = (obj, depthLevel = 0) => {
     if (primitives.indexOf(typeof obj) !== -1) return obj;
     else if (typeof obj === 'function') return '<Function>';
+    else if (obj === null) return null;
     else if (obj instanceof Error) return formatError(obj);
     else if (Array.isArray(obj)) return formatArray(obj, depthLevel);
     else return formatObject(obj, depthLevel);

@@ -62,17 +62,11 @@ function HttpTransport(_ref) {
 function _typeof(obj) {
   "@babel/helpers - typeof";
 
-  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-    _typeof = function (obj) {
-      return typeof obj;
-    };
-  } else {
-    _typeof = function (obj) {
-      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    };
-  }
-
-  return _typeof(obj);
+  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+  }, _typeof(obj);
 }
 
 function Breadcrumbs() {
@@ -158,6 +152,7 @@ function Logger(_ref) {
   };
 
   var formatArray = function formatArray(arr, depthLevel) {
+    if (maxObjectDepth === depthLevel) return ['-pruned-'];
     var formattedArray = [];
 
     for (var i = 0; i < arr.length; i++) {
@@ -202,7 +197,7 @@ function Logger(_ref) {
 
   var format = function format(obj) {
     var depthLevel = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-    if (primitives.indexOf(_typeof(obj)) !== -1) return obj;else if (typeof obj === 'function') return '<Function>';else if (obj instanceof Error) return formatError(obj);else if (Array.isArray(obj)) return formatArray(obj, depthLevel);else return formatObject(obj, depthLevel);
+    if (primitives.indexOf(_typeof(obj)) !== -1) return obj;else if (typeof obj === 'function') return '<Function>';else if (obj === null) return null;else if (obj instanceof Error) return formatError(obj);else if (Array.isArray(obj)) return formatArray(obj, depthLevel);else return formatObject(obj, depthLevel);
   };
 
   var log = function log(level) {

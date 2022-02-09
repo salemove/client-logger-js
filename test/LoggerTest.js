@@ -48,6 +48,11 @@ describe('Logger', () => {
         expectLog({level, attributes: ['<Function>']});
       });
 
+      it('keeps null unchanged', () => {
+        logger[level]({a: null});
+        expectLog({level, attributes: [{a: null}]});
+      });
+
       it('prunes deeply nested objects', () => {
         const message = 'a message';
 
