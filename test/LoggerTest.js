@@ -103,6 +103,35 @@ describe('Logger', () => {
         });
       });
 
+      context('when whitelist is passed', () => {
+        loggerOpts.is(() => ({
+          whitelist: ['some_object', 'baz']
+        }));
+
+        it('redacts various types of fields', () => {
+          const message = 'a message';
+
+          logger[level](message, {
+            some_object: {foo: 'foo', bar: ['bar'], baz: 'baz'},
+            other_object: {baz: 'baz'}
+          });
+
+          // redacts arrays as ['-redacted-'],
+          // objects as {redacted: true},
+          // everything else as '-redacted-'
+          expectLog({
+            level,
+            attributes: [
+              message,
+              {
+                some_object: {foo: '-redacted-', bar: ['-redacted-'], baz: 'baz'},
+                other_object: {redacted: true}
+              }
+            ]
+          });
+        });
+      });
+
       it('extracts error information from error object', () => {
         const error = new Error('oh snap');
 
