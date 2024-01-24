@@ -37,8 +37,16 @@ export default function Logger({
   windowConsole = window.console,
   localStorage = window.localStorage,
   liveLogsKey = 'sm.live_logs',
-  liveLogsEnabled = false
+  liveLogsEnabled = false,
+  whitelist = []
 }) {
+  // Keeping whitelist as array looks better. We can still get the performance of
+  // hash by transforming the array into an object at Logger initialisation.
+  var optimizedWhitelist = {};
+  for (var i = 0; i < whitelist.length; i++) {
+    optimizedWhitelist[whitelist[i]] = true;
+  }
+
   const breadcrumbs = new Breadcrumbs();
   const add = item => publisher.addToBucket('logs', item);
 
@@ -77,7 +85,21 @@ export default function Logger({
     const formatted = {};
 
     forEachEnumerableOwnProperty(obj, key => {
-      formatted[key] = format(obj[key], depthLevel + 1);
+      const value = obj[key];
+
+      if (whitelist.length === 0 || optimizedWhitelist[key]) {
+        formatted[key] = format(value, depthLevel + 1);
+      } else {
+        // Our log consumer does not mixed objects in arrays,
+        // i.e. cannot simply use '-redacted-' here.
+        if (Array.isArray(value)) {
+          formatted[key] = ['-redacted-'];
+        } else if (value && typeof value === 'object') {
+          formatted[key] = {redacted: true};
+        } else {
+          formatted[key] = '-redacted-';
+        }
+      }
     });
 
     return formatted;
