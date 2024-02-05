@@ -80,22 +80,40 @@ export default function Logger({
     return formattedArray;
   };
 
-  const formatObject = (obj, depthLevel) => {
+  const getValueByPath = (obj, path) => {
+    let result = obj;
+
+    for (const part of path) {
+      if (result && result.hasOwnProperty(part)) {
+        result = result[part];
+      } else {
+        return undefined;
+      }
+    }
+
+    return result;
+  };
+
+  const formatObject = (obj, depthLevel, whiteListPath = []) => {
     if (maxObjectDepth === depthLevel) return '-pruned-';
     const formatted = {};
 
     forEachEnumerableOwnProperty(obj, key => {
       const value = obj[key];
 
-      if (whitelist.length === 0 || optimizedWhitelist[key]) {
-        formatted[key] = format(value, depthLevel + 1);
+      if (whitelist.length === 0 || getValueByPath(optimizedWhitelist, [...whiteListPath, key])) {
+        if (value && typeof value === 'object') {
+          formatted[key] = formatObject(value, depthLevel + 1, [...whiteListPath, key]);
+        } else {
+          formatted[key] = format(value, depthLevel + 1);
+        }
       } else {
-        // Our log consumer does not mixed objects in arrays,
+        // Our log consumer does not like mixed objects in arrays,
         // i.e. cannot simply use '-redacted-' here.
         if (Array.isArray(value)) {
           formatted[key] = ['-redacted-'];
         } else if (value && typeof value === 'object') {
-          formatted[key] = {redacted: true};
+          formatted[key] = {redacted: '-redacted-'};
         } else {
           formatted[key] = '-redacted-';
         }
