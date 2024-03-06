@@ -38,15 +38,9 @@ export default function Logger({
   localStorage = window.localStorage,
   liveLogsKey = 'sm.live_logs',
   liveLogsEnabled = false,
-  whitelist = []
+  whitelist = {}
 }) {
-  // Keeping whitelist as array looks better. We can still get the performance of
-  // hash by transforming the array into an object at Logger initialisation.
-  var optimizedWhitelist = {};
-  for (var i = 0; i < whitelist.length; i++) {
-    optimizedWhitelist[whitelist[i]] = true;
-  }
-
+  const isWhiteListEmpty = Object.keys(whitelist).length === 0;
   const breadcrumbs = new Breadcrumbs();
   const add = item => publisher.addToBucket('logs', item);
 
@@ -80,17 +74,32 @@ export default function Logger({
     return formattedArray;
   };
 
-  const formatObject = (obj, depthLevel) => {
-    if (maxObjectDepth === depthLevel) return '-pruned-';
-    const formatted = {};
+  const getValueByPath = (obj, path) => {
+    let result = obj;
 
+    for (const part of path) {
+      if (result && result.hasOwnProperty(part)) {
+        result = result[part];
+      } else {
+        return undefined;
+      }
+    }
+
+    return result;
+  };
+
+  const formatObject = (obj, depthLevel, whiteListPath = []) => {
+    if (depthLevel === maxObjectDepth) {
+      return '-pruned-';
+    }
+
+    const formatted = {};
     forEachEnumerableOwnProperty(obj, key => {
       const value = obj[key];
-
-      if (whitelist.length === 0 || optimizedWhitelist[key]) {
-        formatted[key] = format(value, depthLevel + 1);
+      if (isWhiteListEmpty || getValueByPath(whitelist, [...whiteListPath, key])) {
+        formatted[key] = format(value, depthLevel + 1, [...whiteListPath, key]);
       } else {
-        // Our log consumer does not mixed objects in arrays,
+        // Our log consumer does not like mixed objects in arrays,
         // i.e. cannot simply use '-redacted-' here.
         if (Array.isArray(value)) {
           formatted[key] = ['-redacted-'];
@@ -109,13 +118,13 @@ export default function Logger({
     return {message: error.message, stack: error.stack};
   };
 
-  const format = (obj, depthLevel = 0) => {
+  const format = (obj, depthLevel = 0, whiteListPath = []) => {
     if (primitives.indexOf(typeof obj) !== -1) return obj;
     else if (typeof obj === 'function') return '<Function>';
     else if (obj === null) return null;
     else if (obj instanceof Error) return formatError(obj);
     else if (Array.isArray(obj)) return formatArray(obj, depthLevel);
-    else return formatObject(obj, depthLevel);
+    else return formatObject(obj, depthLevel, whiteListPath);
   };
 
   const log = level => {
