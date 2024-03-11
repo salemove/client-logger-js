@@ -103,29 +103,35 @@ describe('Logger', () => {
         });
       });
 
-      context('when whitelist is passed', () => {
+      context('when nested whitelist is passed', () => {
         loggerOpts.is(() => ({
-          whitelist: ['some_object', 'baz']
+          whitelist: {
+            allowed_value: true,
+            some_object: {
+              foo: true
+            },
+            other_object: true
+          }
         }));
 
         it('redacts various types of fields', () => {
           const message = 'a message';
 
           logger[level](message, {
+            allowed_value: 'allowed_value',
+            some_not_allowed_value: 'some_not_allowed_value',
             some_object: {foo: 'foo', bar: ['bar'], baz: 'baz'},
             other_object: {baz: 'baz'}
           });
-
-          // redacts arrays as ['-redacted-'],
-          // objects as {redacted: true},
-          // everything else as '-redacted-'
           expectLog({
             level,
             attributes: [
               message,
               {
-                some_object: {foo: '-redacted-', bar: ['-redacted-'], baz: 'baz'},
-                other_object: {redacted: true}
+                allowed_value: 'allowed_value',
+                some_not_allowed_value: '-redacted-',
+                other_object: {baz: '-redacted-'},
+                some_object: {bar: ['-redacted-'], baz: '-redacted-', foo: 'foo'}
               }
             ]
           });
