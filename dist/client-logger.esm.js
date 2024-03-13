@@ -208,6 +208,7 @@ function Logger(_ref) {
     return windowConsole && (liveLogsEnabled || localStorage[liveLogsKey] === '1');
   };
   var formatArray = function formatArray(arr, depthLevel) {
+    var whiteListPath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
     if (maxObjectDepth === depthLevel) return ['-pruned-'];
     var formattedArray = [];
     for (var i = 0; i < arr.length; i++) {
@@ -227,7 +228,7 @@ function Logger(_ref) {
         }
         break;
       }
-      formattedArray.push(format(arr[i], depthLevel + 1));
+      formattedArray.push(format(arr[i], depthLevel + 1, whiteListPath));
     }
     return formattedArray;
   };
@@ -286,7 +287,7 @@ function Logger(_ref) {
   var format = function format(obj) {
     var depthLevel = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
     var whiteListPath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
-    if (primitives.indexOf(_typeof(obj)) !== -1) return obj;else if (typeof obj === 'function') return '<Function>';else if (obj === null) return null;else if (obj instanceof Error) return formatError(obj);else if (Array.isArray(obj)) return formatArray(obj, depthLevel);else return formatObject(obj, depthLevel, whiteListPath);
+    if (primitives.indexOf(_typeof(obj)) !== -1) return obj;else if (typeof obj === 'function') return '<Function>';else if (obj === null) return null;else if (obj instanceof Error) return formatError(obj);else if (Array.isArray(obj)) return formatArray(obj, depthLevel, whiteListPath);else return formatObject(obj, depthLevel, whiteListPath);
   };
   var log = function log(level) {
     return function () {

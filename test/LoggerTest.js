@@ -136,6 +136,33 @@ describe('Logger', () => {
             ]
           });
         });
+
+        it('redacts array with various types of fields', () => {
+          const message = 'a message';
+
+          logger[level](message, [
+            {
+              allowed_value: 'allowed_value',
+              some_not_allowed_value: 'some_not_allowed_value',
+              some_object: {foo: 'foo', bar: ['bar'], baz: 'baz'},
+              other_object: {baz: 'baz'}
+            }
+          ]);
+          expectLog({
+            level,
+            attributes: [
+              message,
+              [
+                {
+                  allowed_value: 'allowed_value',
+                  other_object: {baz: '-redacted-'},
+                  some_not_allowed_value: '-redacted-',
+                  some_object: {bar: ['-redacted-'], baz: '-redacted-', foo: 'foo'}
+                }
+              ]
+            ]
+          });
+        });
       });
 
       it('extracts error information from error object', () => {

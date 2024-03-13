@@ -47,7 +47,7 @@ export default function Logger({
   const isLiveLoggingEnabled = () =>
     windowConsole && (liveLogsEnabled || localStorage[liveLogsKey] === '1');
 
-  const formatArray = (arr, depthLevel) => {
+  const formatArray = (arr, depthLevel, whiteListPath = []) => {
     if (maxObjectDepth === depthLevel) return ['-pruned-'];
 
     const formattedArray = [];
@@ -68,7 +68,7 @@ export default function Logger({
         break;
       }
 
-      formattedArray.push(format(arr[i], depthLevel + 1));
+      formattedArray.push(format(arr[i], depthLevel + 1, whiteListPath));
     }
 
     return formattedArray;
@@ -123,7 +123,7 @@ export default function Logger({
     else if (typeof obj === 'function') return '<Function>';
     else if (obj === null) return null;
     else if (obj instanceof Error) return formatError(obj);
-    else if (Array.isArray(obj)) return formatArray(obj, depthLevel);
+    else if (Array.isArray(obj)) return formatArray(obj, depthLevel, whiteListPath);
     else return formatObject(obj, depthLevel, whiteListPath);
   };
 
